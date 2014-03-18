@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<srsml name="gastrectomy" type="srsml">
+	<models name="aa" type="model">
+		<vessels name="abc" type="vessel">
+			<vessel name="aorta" type="artery">
+				<anatomy_model>a</anatomy_model>
+				<cognitive_model>b</cognitive_model>
+				<topological_model>c</topological_model>
+			</vessel>
+			<vessel name="celiac axis" type="artery">
+				<anatomy_model>d</anatomy_model>
+				<cognitive_model>e</cognitive_model>
+				<topological_model>f</topological_model>
+			</vessel>
+			<vessel name="left" type="artery">
+				<anatomy_model>g</anatomy_model>
+				<cognitive_model>h</cognitive_model>
+				<topological_model>i</topological_model>
+			</vessel>				
+		</vessels>
+	</models>
+	<models name="bb" type="model">
+		<vessels name="edf" type="vessel">
+			<vessel name="aorta" type="artery">
+				<anatomy_model>a</anatomy_model>
+				<cognitive_model>b</cognitive_model>
+				<topological_model>c</topological_model>
+			</vessel>
+			<vessel name="celiac axis" type="artery">
+				<anatomy_model>d</anatomy_model>
+				<cognitive_model>e</cognitive_model>
+				<topological_model>f</topological_model>
+			</vessel>
+			<vessel name="left" type="artery">
+				<anatomy_model>g</anatomy_model>
+				<cognitive_model>h</cognitive_model>
+				<topological_model>i</topological_model>
+			</vessel>				
+		</vessels>
+	</models>
+	
+</srsml>

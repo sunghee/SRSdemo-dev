@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<srsml>
+<models>
+	<vessels>
+		<vessel name="aorta" type="artery">
+			<anatomy_model></anatomy_model>
+			<cognitive_model></cognitive_model>
+			<topological_model>			</topological_model>
+		</vessel>
+		<vessel name="celiac axis" type="artery">
+			<anatomy_model>			</anatomy_model>
+			<cognitive_model>			</cognitive_model>
+			<topological_model>			</topological_model>
+		</vessel>
+		<vessel name="left gastric artery (LGA)" type="artery">
+			<anatomy_model>			</anatomy_model>
+			<cognitive_model>			</cognitive_model>
+			<topological_model>			</topological_model>
+		</vessel>				
+	</vessels>
+	<organs>
+		<anatomy_model>
+			<organ id = "1" name = "stomach">
+				<InitialPosition>				</InitialPosition>
+			</organ>
+			<organ id="2" name = "liver">
+				<InitialPosition>				</InitialPosition>
+			</organ>
+		</anatomy_model>
+		<cognitive_model>		</cognitive_model>
+		<topological_model>		</topological_model>
+	</organs>
+	<instruments>
+		<instrument id = "0" name = "name1" type = "type1">
+			<InitialPosition>			</InitialPosition>
+		</instrument>
+		<instrument id = "1" name = "name2" type = "type1">
+			<InitialPosition>			</InitialPosition>
+		</instrument>
+	</instruments>
+</models>
+<views>
+	<surfacemodel>	</surfacemodel>
+	<deformable>	</deformable>
+	<collision>	</collision>
+</views>
+<controllers>
+	<procedures>
+		<procedure id = "7" name="name0" type="type0">
+		</procedure>
+	</procedures>
+</controllers>
+</srsml>
