@@ -13,6 +13,9 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
+#include <string.h>
+#include <malloc.h>
+#include <math.h>
 
 using namespace std;
 
@@ -53,8 +56,12 @@ int mouse_state = 0;
 
 static xml_document<> doc;
 static xml_node<> * root_node=NULL;
-const char* elements;
+//vector<char> elements;
+static char * elements=NULL;
+static char * elements2=NULL;
 
+string str_elements;
+string str_elements2;
 
 //int window_width = 640;
 //int window_height = 480;
@@ -96,9 +103,10 @@ const char* elements;
 void mouseCallBack(int btn, int state, int x, int y)
 {
     // Changes the rotation axis depending on the mouse button pressed.
+	cout << "here is mouseCallback" << endl;
     if ( state == GLUT_DOWN )
     {
-        if( btn == GLUT_LEFT_BUTTON ) axis = 0;
+        if( btn == GLUT_LEFT_BUTTON ) {cout << "here is left button pressed" << endl; axis = 0;}
         if( btn == GLUT_MIDDLE_BUTTON ) axis = 1;
         if( btn == GLUT_RIGHT_BUTTON) axis = 2;
     }
@@ -120,6 +128,8 @@ void motionCallBack(int x, int y)
 
     lastx = x;
     lasty = y;
+
+
 
 }
 
@@ -261,13 +271,16 @@ void main_loop()
 	glRotatef(90, 1, 0, 0);
 	drawCylinder();
 
+
 	/* vessel label */
 	char text[] = "Vessel - cylinder";
+
 	float x = 0, y = 20, z = 0;
 	// The color, red for me
 	glColor3f(1, 0, 0);
 	// Position of the text to be printer
 	glRasterPos3f(x, y, z);
+
 	for(int i = 0; text[i] != '\0'; i++)
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text[i]);
 
@@ -425,7 +438,26 @@ void draw_front(void)
 		highlightBegin();
 
 	glTranslatef(0,15,0);
+	//  if (!menu_inuse) {
+		if (axis == 0) {
+		  if (theObject != 1) {
+			theObject = 1;
+	//		glRotatef(90, 0, 1, 0);
+			glRotatef(sqrt(pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+	//		glutPostRedisplay();
+		  }
+		  axis = 2;
+		}
+	//  }
 	glRotatef(90, 1, 0, 0);
+
+
+//	if(menu_inuse)
+//	{
+//		glPushMatrix();
+//		glRotatef(sqrt(pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+//		glPopMatrix();
+//	}
 	glCallList(VESSEL);
 	/* vessel label */
 	char text[] = "Vessel - cylinder";
@@ -436,6 +468,21 @@ void draw_front(void)
 	glRasterPos3f(x, y, z);
 	for(int i = 0; text[i] != '\0'; i++)
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text[i]);
+
+
+	/* vessel label from srsml */
+	string str_text;
+	str_text = str_elements + str_elements2;
+	x = 0, y = 22, z = 0;
+	// The color, red for me
+	glColor3f(0, 1, 0);
+	// Position of the text to be printer
+	glRasterPos3f(x, y, z);
+
+	for(int i = 0; str_text[i] != '\0'; i++)
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str_text[i]);
+
+
 	if (theObject == 1)
 		highlightEnd();
 	glPopMatrix();
@@ -448,6 +495,16 @@ void draw_front(void)
 	if (theObject == 2)
 		highlightBegin();
 	glTranslatef(5, -7, 15);
+	//  if (!menu_inuse) {
+//		if (mouse_state == GLUT_LEFT) {
+		  if (theObject != 2) {
+			theObject = 2;
+			glRotatef(90, 0, 1, 0);
+	//		glRotatef(sqrt(pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+	//		glutPostRedisplay();
+		  }
+//		}
+	//  }
 	glRotatef(45, 0, 0, 1.0);
 	glScalef(2.0, 1.0, 1.0);
 	/* stomach label */
@@ -919,7 +976,7 @@ void display(void)
 
   output(80, 2800, "Automatically names object under mouse.");
   output(80, 100, "Located: %s.", objectNames[theObject]);
-  output(80, 200, "First Model: %s", (const char*) elements);
+  output(80, 200, "First Model: %s\n",(char*) elements);
 
 //  output(80, 200, "First Model: %s", (const char*) (((root_node)->first_node("models"))->first_attribute("name"))->value());
 //  output(80, 200, "First Model: %s", (const char*) (((root_node->last_node())->last_node())->first_attribute("name"))->value());
@@ -956,7 +1013,7 @@ void locate(int value)
       viewport[2] = W;
       viewport[3] = H;
       gluPickMatrix(x, H - y, 5.0, 5.0, viewport);
-      myortho();
+      myortho(); // this is different from locate_pers
 
       glMatrixMode(GL_MODELVIEW);
       draw_front();
@@ -992,7 +1049,7 @@ void locate_pers(int value)
       viewport[2] = W;
       viewport[3] = H;
       gluPickMatrix(x, H - y, 5.0, 5.0, viewport);
-      mypers();
+      mypers(); // this is different from locate
 
       glMatrixMode(GL_MODELVIEW);
       draw_front();
@@ -1008,6 +1065,7 @@ void locate_pers(int value)
   locating = 0;
 }
 
+/* passive function for perspective view */
 void passive_pers(int newx, int newy)
 {
   x = newx;
@@ -1017,6 +1075,7 @@ void passive_pers(int newx, int newy)
     glutTimerFunc(1, locate_pers, 0);
   }
 }
+/* passive function for orthographic view */
 void passive(int newx, int newy)
 {
   x = newx;
@@ -1096,6 +1155,60 @@ void keyboard(int key, int x, int y)
 	glutPostRedisplay();
 }
 
+void loadSRSML()
+{
+
+	cout << "parsing srsml..." << endl;
+
+
+	// Read the xml file into a vector
+	ifstream theFile ("gastrectomy3.xml");
+	vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
+	buffer.push_back('\0');
+	// Parse the buffer using the xml file parsing library into doc
+	doc.parse<0>(&buffer[0]);
+	// Find our root node
+	cout << "parsing a root element" << endl;
+	root_node = doc.first_node("srsml");
+
+	int size = strlen((((root_node->first_node("models"))->first_node("vessels"))->first_attribute("name"))->value());
+	int size2 = strlen((((root_node->first_node("models"))->first_node("vessels"))->first_attribute("type"))->value());
+
+	// variables for malloc
+	elements=(char*) malloc(size+1);
+	elements2=(char*) malloc(size2+1);
+
+	strcpy ((char*)elements,(char*)((((root_node->first_node("models"))->first_node("vessels"))->first_attribute("name"))->value()));
+	strcpy ((char*)elements2,(char*)((((root_node->first_node("models"))->first_node("vessels"))->first_attribute("type"))->value()));
+
+	// variables for string
+	str_elements.assign((((root_node->first_node("models"))->first_node("vessels"))->first_attribute("name"))->value());
+	str_elements2.assign((((root_node->first_node("models"))->first_node("vessels"))->first_attribute("type"))->value());
+
+	// Iterate over the vessels
+	if (root_node){
+		cout << "if there is a root element" << endl;
+		for (xml_node<> * models_node = root_node->first_node("models"); models_node!=NULL; models_node = models_node->next_sibling())
+		{
+			cout << "here is in the model for loop" << endl;
+			for (xml_node<> * vessels_node = models_node->first_node("vessels"); vessels_node!=NULL; vessels_node = vessels_node->next_sibling())
+			{
+				cout << "here is in the vessels for loop" << endl;
+				printf("I have visited in. ");//,
+					// Interate over the beers
+				cout << "here is before the inner for loop" << endl;
+				for(xml_node<> * vessel_node = vessels_node->first_node("vessel"); vessel_node; vessel_node = vessel_node->next_sibling())
+				{
+					printf("On, I tried their %s which is a %s. ",
+							vessel_node->first_attribute("name")->value(),
+							vessel_node->first_attribute("type")->value());
+				}
+				cout << endl;
+			}
+		}
+	}
+}
+
 void loadXML()
 {
 
@@ -1114,6 +1227,13 @@ void loadXML()
 	cout << "before parsing a root element" << endl;
 	root_node = doc.first_node("MyBeerJournal");
 	// Iterate over the brewerys
+//	elements = "sldfjlsdjfldsjfldsjflsdjflds";
+	elements=(char*) malloc(strlen(((((root_node)->first_node("Brewery"))->first_attribute("name"))->value()))+1);
+
+	strcpy ((char*)elements,(char*)(((root_node)->first_node("Brewery"))->first_attribute("name"))->value());
+	elements[strlen(((((root_node)->first_node("Brewery"))->first_attribute("name"))->value()))]='\0';
+//	elements = "char";
+	printf("here is element:%s\n",elements);
 	cout << "after parsing a root element" << endl;
 	if (root_node){
 		cout << "if there is a root element" << endl;
@@ -1137,58 +1257,12 @@ void loadXML()
 		}
 	}
 }
-void loadSRSML()
-{
 
-	cout << "Parsing my beer journal..." << endl;
-
-
-	// Read the xml file into a vector
-	cout << "before loading a xml file" << endl;
-	ifstream theFile ("gastrectomy.xml");
-	cout << "after loading a xml file" << endl;
-	vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	// Parse the buffer using the xml file parsing library into doc
-	doc.parse<0>(&buffer[0]);
-	// Find our root node
-	cout << "before parsing a root element" << endl;
-	root_node = doc.first_node("srsml");
-	elements= (((root_node)->first_node("models"))->first_attribute("name"))->value();
-//	elements= (((root_node)->last_node())->first_attribute("name"))->value();
-//	// Iterate over the brewerys
-//	cout << "after parsing a root element" << endl;
-//	if (root_node){
-//		cout << "if there is a root element" << endl;
-//		for (xml_node<> * models_node = root_node->first_node("models"); models_node!=NULL; models_node = models_node->next_sibling())
-//		{
-//			cout << "here is in the model for loop" << endl;
-//			for (xml_node<> * vessels_node = models_node->first_node("vessels"); vessels_node!=NULL; vessels_node = vessels_node->next_sibling())
-//			{
-//				cout << "here is in the vessels for loop" << endl;
-//				printf("I have visited in. ");//,
-//	//				brewery_node->first_attribute("name")->value(),
-//	//				brewery_node->first_attribute("type")->value());
-//					// Interate over the beers
-//				cout << "here is before the inner for loop" << endl;
-//				for(xml_node<> * vessel_node = vessels_node->first_node("vessel"); vessel_node; vessel_node = vessel_node->next_sibling())
-//				{
-//					printf("On, I tried their %s which is a %s. ",
-//							vessel_node->first_attribute("name")->value(),
-//							vessel_node->first_attribute("type")->value());
-////					printf("I gave it the following review: %s", vessel_node->value());
-//				}
-//				cout << endl;
-//			}
-//		}
-//	}
-}
 int main(int argc, char ** argv)
 {
 
 	int submenu;
 
-//	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
     glutInit(&argc, argv);
     glutInitWindowSize(window_width, window_height); //set a window size
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE|GLUT_DEPTH);
@@ -1231,6 +1305,9 @@ int main(int argc, char ** argv)
     glutSpecialFunc(keyboard);
 
     glutMainLoop();
+
+    free(elements);
+    free(elements2);
 
     return 0;
 

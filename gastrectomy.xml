@@ -1,42 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<srsml name="gastrectomy" type="srsml">
-	<models name="aa" type="model">
-		<vessels name="abc" type="vessel">
-			<vessel name="aorta" type="artery">
-				<anatomy_model>a</anatomy_model>
-				<cognitive_model>b</cognitive_model>
-				<topological_model>c</topological_model>
-			</vessel>
-			<vessel name="celiac axis" type="artery">
-				<anatomy_model>d</anatomy_model>
-				<cognitive_model>e</cognitive_model>
-				<topological_model>f</topological_model>
-			</vessel>
-			<vessel name="left" type="artery">
-				<anatomy_model>g</anatomy_model>
-				<cognitive_model>h</cognitive_model>
-				<topological_model>i</topological_model>
-			</vessel>				
-		</vessels>
-	</models>
-	<models name="bb" type="model">
-		<vessels name="edf" type="vessel">
-			<vessel name="aorta" type="artery">
-				<anatomy_model>a</anatomy_model>
-				<cognitive_model>b</cognitive_model>
-				<topological_model>c</topological_model>
-			</vessel>
-			<vessel name="celiac axis" type="artery">
-				<anatomy_model>d</anatomy_model>
-				<cognitive_model>e</cognitive_model>
-				<topological_model>f</topological_model>
-			</vessel>
-			<vessel name="left" type="artery">
-				<anatomy_model>g</anatomy_model>
-				<cognitive_model>h</cognitive_model>
-				<topological_model>i</topological_model>
-			</vessel>				
-		</vessels>
-	</models>
-	
-</srsml>
+<MyBeerJournal>
+	<Brewery name="Founders Brewing Company" location="Grand Rapids, MI">
+		<Beer name="Centennial" description="IPA" rating="A+" dateSampled="01/02/2011">
+			"What an excellent IPA. This is the most delicious beer I have ever tasted!"
+		</Beer>
+	</Brewery>
+	<Brewery name="Brewery Vivant" location="Grand Rapids, MI">
+		<Beer name="Farmohouse Ale" description="Belgian Ale" rating="B" dateSampled="02/07/2015">
+			This beer is not so good... but I am not that big of a fan of english style ales.
+		</Beer>
+	</Brewery>
+</MyBeerJournal>
