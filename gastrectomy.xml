@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<MyBeerJournal>
-	<Brewery name="Founders Brewing Company" location="Grand Rapids, MI">
-		<Beer name="Centennial" description="IPA" rating="A+" dateSampled="01/02/2011">
-			"What an excellent IPA. This is the most delicious beer I have ever tasted!"
-		</Beer>
-	</Brewery>
-	<Brewery name="Brewery Vivant" location="Grand Rapids, MI">
-		<Beer name="Farmohouse Ale" description="Belgian Ale" rating="B" dateSampled="02/07/2015">
-			This beer is not so good... but I am not that big of a fan of english style ales.
-		</Beer>
-	</Brewery>
-</MyBeerJournal>
+<srsml name="gastectomy" type="srs">
+    <models name="aa" type="srsml">
+        <vessels name="aorta" type="cylinder">a
+        </vessels>
+	</models>
+</srsml>

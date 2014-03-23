@@ -1162,7 +1162,7 @@ void loadSRSML()
 
 
 	// Read the xml file into a vector
-	ifstream theFile ("gastrectomy3.xml");
+	ifstream theFile ("gastrectomy.xml");
 	vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
 	buffer.push_back('\0');
 	// Parse the buffer using the xml file parsing library into doc
