@@ -57,47 +57,48 @@ int mouse_state = 0;
 static xml_document<> doc;
 static xml_node<> * root_node=NULL;
 //vector<char> elements;
-static char * elements=NULL;
+static char * elements=NULL; // char variables for elements
 static char * elements2=NULL;
 
-string str_elements;
+string str_elements; // string variables for elements
 string str_elements2;
 
 //int window_width = 640;
 //int window_height = 480;
 
-//void drw_polygon(int n = 3, int arg = 0, float mult = 1, float v = 1.0) {
+void drawPolygon(int n =20 , int arg = 0, float mult = 1, float v = 1.0)
+{
 //if (arg < 0)
 //    arg = 0;
 //
-//// Cylinder Bottom
-//glBegin(GL_POLYGON);
-//    glColor4f(1.0, 0.0, 0.0, 1.0);
-//    for(int i = arg; i <= (360 + arg); i += (360 / n)) {
-//        float a = i * M_PI / 180; // degrees to radians
-//        glVertex3f(mult * cos(a), mult * sin(a), 0.0);
-//    }
-//glEnd();
-//
-//// Cylinder Top
-//glBegin(GL_POLYGON);
-//    glColor4f(0.0, 0.0, 1.0, 1.0);
-//    for(int i = arg; i <= (360 + arg); i += (360 / n)) {
-//        float a = i * M_PI / 180; // degrees to radians
-//        glVertex3f(mult * cos(a), mult * sin(a), v);
-//    }
-//glEnd();
-//
-//// Cylinder "Cover"
-//glBegin(GL_QUAD_STRIP);
-//    glColor4f(1.0, 1.0, 0.0, 1.0);
-//    for(int i = arg; i < 480; i += (360 / n)) {
-//        float a = i * M_PI / 180; // degrees to radians
-//        glVertex3f(mult * cos(a), mult * sin(a), 0.0);
-//        glVertex3f(mult * cos(a), mult * sin(a), v);
-//    }
-//glEnd();
-//}
+// Cylinder Bottom
+glBegin(GL_POLYGON);
+    glColor4f(1.0, 0.0, 0.0, 1.0);
+    for(int i = arg; i <= (360 + arg); i += (360 / n)) {
+        float a = i * M_PI / 180; // degrees to radians
+        glVertex3f(mult * cos(a), mult * sin(a), 0.0);
+    }
+glEnd();
+
+// Cylinder Top
+glBegin(GL_POLYGON);
+    glColor4f(0.0, 0.0, 1.0, 1.0);
+    for(int i = arg; i <= (360 + arg); i += (360 / n)) {
+        float a = i * M_PI / 180; // degrees to radians
+        glVertex3f(mult * cos(a), mult * sin(a), v);
+    }
+glEnd();
+
+// Cylinder "Cover"
+glBegin(GL_QUAD_STRIP);
+    glColor4f(1.0, 1.0, 0.0, 1.0);
+    for(int i = arg; i < 480; i += (360 / n)) {
+        float a = i * M_PI / 180; // degrees to radians
+        glVertex3f(mult * cos(a), mult * sin(a), 0.0);
+        glVertex3f(mult * cos(a), mult * sin(a), v);
+    }
+glEnd();
+}
 
 
 void mouseCallBack(int btn, int state, int x, int y)
@@ -182,6 +183,7 @@ void myInit(void)
   glNewList(STOMACH, GL_COMPILE);
 //  glutSolidTetrahedron();
   glutSolidSphere(4.0, 16, 16);
+  drawPolygon();
   glEndList();
 
   glNewList(LIVER, GL_COMPILE);
@@ -438,17 +440,17 @@ void draw_front(void)
 		highlightBegin();
 
 	glTranslatef(0,15,0);
-	//  if (!menu_inuse) {
-		if (axis == 0) {
-		  if (theObject != 1) {
-			theObject = 1;
-	//		glRotatef(90, 0, 1, 0);
-			glRotatef(sqrt(pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
-	//		glutPostRedisplay();
+//	//  if (!menu_inuse) {
+//		if (axis == 0) {
+		  if (theObject == 1) {
+//			theObject = 1;
+//	//		glRotatef(90, 0, 1, 0);
+			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+//	//		glutPostRedisplay();
 		  }
-		  axis = 2;
-		}
-	//  }
+//		  axis = 2;
+//		}
+//	//  }
 	glRotatef(90, 1, 0, 0);
 
 
@@ -497,10 +499,10 @@ void draw_front(void)
 	glTranslatef(5, -7, 15);
 	//  if (!menu_inuse) {
 //		if (mouse_state == GLUT_LEFT) {
-		  if (theObject != 2) {
-			theObject = 2;
-			glRotatef(90, 0, 1, 0);
-	//		glRotatef(sqrt(pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+		  if (theObject == 2) {
+//			theObject = 2;
+//			glRotatef(90, 0, 1, 0);
+			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
 	//		glutPostRedisplay();
 		  }
 //		}
