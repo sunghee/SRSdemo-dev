@@ -1,10 +1,13 @@
 //============================================================================
 // Name        : SRSdemo1.cpp
+
 // Author      : Sung Hee Park @ ETRI
 // Version     :
 // Copyright   : (C) Copyright 2014
 // Description : Hello World in C++, Ansi-style
 //============================================================================
+
+// ¡÷ºÆ
 
 #include <GL/glu.h>
 #include <GL/glut.h>
@@ -30,6 +33,7 @@ using namespace rapidxml;
 #define INSTRUMENT1 4
 #define INSTRUMENT2 5
 #define STOMACH_MESH	6
+
 
 
 
