@@ -248,7 +248,7 @@ static GLfloat vnormal[787*3] = {
 };
 
 static GLuint tindices2[1439*3] = {
-0, 1, 749, 1, 2, 749, 749, 2, 747, 1, 559, 2, 559, 552, 2, 2, 552, 3, 233, 638, 4, 638, 5, 4, 4, 5, 691, 5, 6, 691,
+0, 1, 749, 1, 2, 749, 749, 2, 747, 1, 559, 2, 559, 552, 2, 2, 552, 3, 233, 638, 4, 638, 5, 4, 4, 5, 691, 5, 6, 691 ,
 691, 6, 7, 6, 8, 7, 7, 8, 767, 8, 9, 767, 767, 9, 686, 9, 18, 686, 686, 18, 685, 18, 10, 685, 685, 10, 12, 10, 11, 12,
 5, 313, 6, 313, 314, 6, 6, 314, 8, 314, 13, 8, 8, 13, 9, 13, 316, 9, 9, 316, 18, 316, 315, 18, 18, 315, 14, 315, 15, 14,
 14, 15, 24, 15, 544, 24, 24, 544, 383, 544, 16, 383, 14, 17, 18, 17, 19, 18, 18, 19, 20, 19, 468, 20, 20, 468, 23, 468, 21, 23,
@@ -399,18 +399,25 @@ void drawStomach()
 {
 	  glBegin(GL_TRIANGLES);
 	  for (i = 0; i < 1439; i++) {
+//	        glNormal3fv(&vnormal[(tindices2[3*i+0])*3+0]);
+//	        glVertex3fv(&vdata2[(tindices2[3*i+0])*3+0]);
+//	        glNormal3fv(&vnormal[(tindices2[3*i+1])*3+0]);
+//	        glVertex3fv(&vdata2[(tindices2[3*i+1])*3+0]);
+//	        glNormal3fv(&vnormal[(tindices2[3*i+2])*3+0]);
+//	        glVertex3fv(&vdata2[(tindices2[3*i+2])*3+0]);
 	        glNormal3f(vnormal[(tindices2[3*i+0])*3+0], vnormal[(tindices2[3*i+0])*3+1], vnormal[(tindices2[3*i+0])*3+2]);
 	        glVertex3f(vdata2[(tindices2[3*i+0])*3+0],vdata2[(tindices2[3*i+0])*3+1], vdata2[(tindices2[3*i+0])*3+2]);
 	        glNormal3f(vnormal[(tindices2[3*i+1])*3+0], vnormal[(tindices2[3*i+1])*3+1], vnormal[(tindices2[3*i+1])*3+2]);
 	        glVertex3f(vdata2[(tindices2[3*i+1])*3+0],vdata2[(tindices2[3*i+1])*3+1], vdata2[(tindices2[3*i+1])*3+2]);
 	        glNormal3f(vnormal[(tindices2[3*i+2])*3+0], vnormal[(tindices2[3*i+2])*3+1], vnormal[(tindices2[3*i+2])*3+2]);
 	        glVertex3f(vdata2[(tindices2[3*i+2])*3+0],vdata2[(tindices2[3*i+2])*3+1], vdata2[(tindices2[3*i+2])*3+2]);
-//			glNormal3fv(&vnormal[(tindices2[3*i+0])*3+0]);
-//			glVertex3fv(&vdata2[(tindices2[3*i+0])*3+0]);
-//			glNormal3fv(&vnormal[(tindices2[3*i+1])*3+0]);
-//			glVertex3fv(&vdata2[(tindices2[3*i+1])*3+0]);
-//			glNormal3fv(&vnormal[(tindices2[3*i+2])*3+0]);
-//			glVertex3fv(&vdata2[(tindices2[3*i+2])*3+0]);
+	        //	        glNormal3fv(&vdata[tindices[i][0]][0]);
+	        //	        glVertex3fv(&vdata[tindices[i][0]][0]);
+	        //	        glNormal3fv(&vdata[tindices[i][1]][0]);
+	        //	        glVertex3fv(&vdata[tindices[i][1]][0]);
+	        //	        glNormal3fv(&vdata[tindices[i][2]][0]);
+	        //	        glVertex3fv(&vdata[tindices[i][2]][0]);
+
 	  }
 	  glEnd();
 
@@ -611,7 +618,7 @@ void myInit(void)
 
   glNewList(STOMACH, GL_COMPILE);
 //  glutSolidTetrahedron();
-  //glutSolidSphere(4.0, 16, 16);
+  glutSolidSphere(4.0, 16, 16);
 //  drawPolygon();
   glEndList();
 
@@ -817,7 +824,7 @@ void GL_Setup(int a, int b)
 	glViewport(0,0, a, b);
 	glMatrixMode(GL_PROJECTION);
 	glEnable(GL_DEPTH_TEST);
-	gluPerspective(45, (float)a/b, 1.1, 200);
+	gluPerspective(45, (float)a/b, 1.1, 400);
 	glMatrixMode(GL_MODELVIEW);
 }
 
@@ -865,7 +872,7 @@ void draw_front(void)
 
 	glPushMatrix();
 	//	glRotatef(20.0, 1.0, 0.0, 0.0);
-	gluLookAt(0.0+shift, 0.0, 60.0+scaling, -34.7744, 128.725, -69.7196, 0,1,0);
+	gluLookAt(0.0+shift, 0.0, 60.0+scaling, 0.0, 0.0,0.0, 0,1,0);
 //	glScalef(1.3, 1.3, 1.3);
 
 	////////////////
@@ -933,7 +940,7 @@ void draw_front(void)
 	glPushMatrix();
 	if (theObject == 2)
 		highlightBegin();
-	glTranslatef(5, -7, 15);
+	glTranslatef(0,40,20);
 	//  if (!menu_inuse) {
 //		if (mouse_state == GLUT_LEFT) {
 		  if (theObject == 2) {
@@ -945,7 +952,6 @@ void draw_front(void)
 //		}
 	//  }
 	glRotatef(45, 0, 0, 1.0);
-//	glTranslatef(34.7744, -128.725, 69.7196);
 	glScalef(6.0, 3.0, 3.0);
 	/* stomach label */
 	char text4[] = "stomach: ellipsoid";
@@ -1040,28 +1046,26 @@ void draw_front(void)
 		highlightEnd();
 	glPopMatrix();
 
-	glPopMatrix();
-
 	//////////////
-	// Stomach Mesh
+	// Stomach
 	/////////////
 	glLoadName(STOMACH_MESH);
 	glPushMatrix();
 	if (theObject == 6)
 		highlightBegin();
-//	glTranslatef(5, -7, 15);
+//	glTranslatef(0,40,20);
 	//  if (!menu_inuse) {
 //		if (mouse_state == GLUT_LEFT) {
 		  if (theObject == 6) {
 //			theObject = 2;
 //			glRotatef(90, 0, 1, 0);
-//			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
 	//		glutPostRedisplay();
 		  }
 //		}
 	//  }
 //	glRotatef(45, 0, 0, 1.0);
-//	glTranslatef(34.7744, -128.725, 69.7196);
+	glTranslatef(34.7744, -128.725, 69.7196);
 //	glScalef(6.0, 3.0, 3.0);
 	/* stomach label */
 	char text6[] = "stomach: mesh";
@@ -1077,6 +1081,9 @@ void draw_front(void)
 	if (theObject == 6)
 		highlightEnd();
 	glPopMatrix();
+
+	glPopMatrix();
+
 
 
 }
@@ -1374,7 +1381,7 @@ void myortho(void)
 
 void mypers(void)
 {
-	gluPerspective(45, (float)W/H, 1.1, 400);
+	gluPerspective(45, (float)W/H, 1.1, 600);
 }
 /*  processHits() prints out the contents of the
  *  selection array.
