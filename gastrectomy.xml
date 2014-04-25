@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <srsml name="gastectomy" type="srs">
     <models name="aa" type="srsml">
-        <vessels name="aorta" type="cylinder">a
-        </vessels>
+        <vessels name="aorta" type="cylinder">a</vessels>
 	</models>
 </srsml>
