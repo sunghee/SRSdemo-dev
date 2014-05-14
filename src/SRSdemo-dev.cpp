@@ -668,9 +668,9 @@ void draw_cognitive(void)
 	GLdouble eqn2[4]={1.0, 0.0, 0.0, 0.0};
 
 
-//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 //	glClearColor(0,1,0,1);
+//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glColor3f(0.5,0.0,0.0);
 
@@ -719,6 +719,10 @@ void draw_cognitive(void)
 }
 void draw_front(void)
 {
+
+	glClearColor(0,1,0,1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
 	glPushMatrix();
 	gluLookAt(0.0+shift, -500.0, scaling+average_z, average_x, average_y, average_z, 0,0,1);
