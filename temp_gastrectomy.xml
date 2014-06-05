@@ -2,21 +2,52 @@
 <srsml>
 <models>
 	<vessels>
-		<vessel name="aorta" type="artery">
-			<anatomy_model></anatomy_model>
-			<cognitive_model></cognitive_model>
-			<topological_model>			</topological_model>
-		</vessel>
-		<vessel name="celiac axis" type="artery">
-			<anatomy_model>			</anatomy_model>
-			<cognitive_model>			</cognitive_model>
-			<topological_model>			</topological_model>
-		</vessel>
-		<vessel name="left gastric artery (LGA)" type="artery">
-			<anatomy_model>			</anatomy_model>
-			<cognitive_model>			</cognitive_model>
-			<topological_model>			</topological_model>
-		</vessel>				
+		<anatomy_model>
+			<vessel name="aorta" type="artery">		</vessel>
+			<vessel name="celiac axis" type="artery">		</vessel>
+			<vessel name="left gastric artery (LGA)" type="artery">		</vessel>
+		</anatomy_model>			
+		<cognitive_model>
+			<vessel name="aorta" type="artery"></vessel>
+			<vessel name="celiac axis" type="artery"></vessel>
+			<vessel name="left gastric artery (LGA)" type="artery"></vessel>
+		</cognitive_model>
+		<topological_model>			
+			<graph>
+				<nodes name="nodes" type = "string" dimension="3" size="13">
+					<node id = "0" x=0.0 y=0.0 z=100.>v0</node>
+					<node id = "1" x=0.0 y=0.0 z=30.>v1</node>
+					<node id = "2" x=0.0 y=0.0 z=-20.>v2</node>
+					<node id = "3" x=0.0 y=0.0 z=-100.>v3</node>
+					<node id = "4" x=0.0 y=-30. z=30.>v4</node>
+					<node id = "5" x=30. y=-30. z=60.>v5</node>
+					<node id = "6" x=60. y=-30. z=40.>v6</node>
+					<node id = "7" x=0.0 y=-40. z=30.>v7</node>
+					<node id = "8" x=-40. y=-40. z=30.>v8</node>
+					<node id = "9" x=-60. y=-40. z=80.>v9</node>
+					<node id = "10" x=20. y=-50. z=30.>v10</node>
+					<node id = "11" x=80. y=-50. z=30.>v11</node>
+					<node id = "12" x=10. y=-50. z=-20.>v12</node>
+				</nodes>
+				<edges name="edges" type = "string" dimesion = "2" size="12">
+					<edge id = "0" start="0" end="1">e0</edge>
+					<edge id = "1" start="1" end="2">e1</edge>
+					<edge id = "2" start="2" end="3">e2</edge>
+					<edge id = "3" start="1" end="4">e3</edge>
+					<edge id = "4" start="4" end="7">e4</edge>
+					<edge id = "5" start="4" end="5">e5</edge>
+					<edge id = "6" start="5" end="6">e6</edge>
+					<edge id = "7" start="7" end="8">e7</edge>
+					<edge id = "8" start="8" end="9">e8</edge>
+					<edge id = "9" start="7" end="10">e9</edge>
+					<edge id = "10" start="10" end="11">e10</edge>
+					<edge id = "11" start="2" end="12">e11</edge>
+				</edges>
+			</graph>
+			<vessel name="aorta" type="artery">	0,3</vessel>
+			<vessel name="celiac axis" type="artery">1,7</vessel>
+			<vessel name="left gastric artery (LGA)" type="artery">4,6</vessel>
+		</topological_model>
 	</vessels>
 	<organs>
 		<anatomy_model>
@@ -45,9 +76,17 @@
 	<collision>	</collision>
 </views>
 <controllers>
-	<procedures>
-		<procedure id = "7" name="name0" type="type0">
-		</procedure>
-	</procedures>
+	<actions>
+		<action name="cut"></action>
+		<action name="cut-off"></action>
+		<action name="cautery"></action>
+		<action name="ultrassonicprocess"></action>
+		<action name="grasp"></action>
+		<action name="stitch"></action>
+		<action name="clip></action>
+	</actions>
 </controllers>
+<procedures>
+	<procedure id = "7" name="name0" type="type0"></procedure>
+</procedures>
 </srsml>

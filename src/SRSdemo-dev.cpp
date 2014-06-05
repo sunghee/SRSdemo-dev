@@ -11,6 +11,7 @@
 #include "rapidxml/rapidxml.hpp"
 #include "include/json/json.h"
 
+#include <math.h>
 #include <fstream>
 #include <vector>
 #include <iostream>
@@ -18,6 +19,9 @@
 #include <malloc.h>
 #include <math.h>
 #include <time.h>
+#include <sstream>
+
+#include "graph.h"
 
 using namespace Json;
 
@@ -34,8 +38,13 @@ using namespace rapidxml;
 #define PANCREAS	4
 #define PORTALVEIN	5
 #define STOMACH		6
-#define INSTRUMENT1 7
-#define INSTRUMENT2 8
+#define LIGHTSTICK	7
+#define INSTRUMENT1 8
+#define INSTRUMENT2 9
+#define NODEBALL	10
+#define LIGHTARROW		11
+#define CLIP		12
+
 
 string model_filenames[]= {
 		"C:\\Users\\sunghee\\Google 드라이브\\SRS\\HYJ\\artery_merged.json",
@@ -46,11 +55,13 @@ string model_filenames[]= {
 		"C:\\Users\\sunghee\\Google 드라이브\\SRS\\HYJ\\stom_merged.json"
 };
 
-#define BUFSIZE 512
+#define BUFSIZE 1024
 
 
 char *objectNames[] =
-{"Nothing", "Artery", "Gallbladder", "Liver", "Pancreas","Portal Vein", "Stomach", "Instrument1", "Instrument2"};
+{"Nothing", "Artery", "Gallbladder", "Liver", "Pancreas",
+"Portal Vein", "Stomach","Lightstick", "Instrument1", "Instrument2",
+"Nodeball","Lightarrow", "CLIP"};
 
 static GLfloat theta[] = {0.0, 0.0, 0.0}; // Rotation (X,Y,Z)
 static GLint axis = 2; // Changed by the Mouse Callback Routine
@@ -106,7 +117,7 @@ static GLuint tindices[20][3] = {
 int i;
 
 
-static GLfloat nodes[18][3] = {
+static GLfloat nodes[13][3] = {
 		{0.0, 0.0, 100.}, {0.0, 0.0, 30.}, {0.0, 0.0, -20.}, {0.0, 0.0, -100.},// aorta: shortest (v0, v3),CT: shortest path(v1, v4),
 		{0.0, -30., 30.}, {30., -30., 60.}, {60., -30., 40.}, //CT: shortest path(v1, v4),LGA:shortpath(v4, v6)
 		{0., -40, 30},
@@ -118,13 +129,25 @@ static GLfloat nodes[18][3] = {
 
 static GLuint edges[12][2] = {
 		{0,1}, {1,2}, {2,3}, // aorta: shortest (v0, v3),
-		{1,4},{4,7},//CT: shortest path(v1, v4),
+		{1,4},{4,7},//CT: shortest path(v1, v7),
 		{4,5}, {5,6},//LGA:shortpath(v4, v6)
-		{7,8},//CHA: shortest path(v4, v7)
-		{8,9},// LHA: shortest path(v7, v8)
-		{7,10},{10,11}, // SpA: shortest path(v4, v10)
-		{2, 12}// SMA: shortest path(v2,v11)
+		{7,8},//CHA: shortest path(v7, v8)
+		{8,9},// LHA: shortest path(v8, v9)
+		{7,10},{10,11}, // SpA: shortest path(v7, v11)
+		{2, 12}// SMA: shortest path(v2,v12)
 };
+
+string label_vessels[] ={"aorta" ,
+					"celiac trunk",
+					"LGA",
+					"SpA",
+					"CHA",
+					"LHA",
+					"SMA"
+};
+
+int sLabel=0, eLabel=7;
+
 
 /*
 void drawStomach()
@@ -308,7 +331,15 @@ void draw_sphere()
 
 
 }
+void drawCone()
+{
+	float base = 3.0;
+	float height = 30.0;
+	float slices = 10.0;
+	float stacks = 20.0;
 
+	glutSolidCone(base,height,slices,stacks);
+}
 void drawCylinder()
 {
 	float top = 3.0;
@@ -317,7 +348,19 @@ void drawCylinder()
 	float slices = 10.0;
 	float stacks = 20.0;
 
-	gluCylinder(gluNewQuadric(), base, top, height, slices, stacks);
+//	GLUquadricObj *quadric // Create pointer for storage space for object
+
+	//example
+	GLUquadricObj *Cylinder; // Create pointer for our cylinder
+
+	Cylinder = gluNewQuadric(); // Create our new quadric object
+	gluQuadricDrawStyle( Cylinder, GLU_FILL); //FILL also can be line(wire)
+//	gluQuadricNormals( Cylinder, GLU_SMOOTH); // For if lighting is to be used.
+	gluQuadricOrientation( Cylinder,GLU_OUTSIDE);
+//	gluQuadricTexture( Cylinder, GL_TRUE);// if you want to map a texture to it.
+
+//	gluCylinder(gluNewQuadric(), base, top, height, slices, stacks);
+	gluCylinder(Cylinder, base, top, height, slices, stacks);
 }
 
 void drawArtery(int i);
@@ -331,12 +374,14 @@ void myInit(void)
   GLfloat light_specular[] =
   {1.0, 1.0, 1.0, 1.0};
   GLfloat light_position[] =
-  {1.0, 1.0, 1.0, 0.0};
+  {0.0, 0.0, 200.0, 0.0};
 
   glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
   glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
   glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+  glShadeModel(GL_SMOOTH);
 
   glEnable(GL_LIGHT0);
   glDepthFunc(GL_LESS);
@@ -351,7 +396,6 @@ void myInit(void)
 	  drawArtery(i);
 	  glEndList();
   }
-
   average_x = sum_x/(point_number/3.0);
   average_y = sum_y/(point_number/3.0);
   average_z = sum_z/(point_number/3.0);
@@ -376,20 +420,47 @@ void myInit(void)
 ////  glutSolidSphere(4.0, 16, 16);
 ////  drawPolygon();
 //  glEndList();
-//  glNewList(STOMACH, GL_COMPILE);
-//  //glutSolidIcosahedron();
-////  glutSolidSphere(2.0, 16, 16);
+
+  glNewList(STOMACH, GL_COMPILE);
+  //glutSolidIcosahedron();
+  glColor3f(1.0,0.0,1.0);
+  glutSolidSphere(3.0, 16, 16);
+  glEndList();
+
+  glNewList(LIGHTSTICK, GL_COMPILE);
+  //glutSolidIcosahedron();
+  glutSolidSphere(2.0, 16, 16);
+  glEndList();
+
+//  glNewList(CYLINDER, GL_COMPILE);
+////  drawCylinder();
+//  glutSolidSphere(2.0, 16, 16);
 //  glEndList();
-//
+
   glNewList(INSTRUMENT1, GL_COMPILE);
   //glutSolidIcosahedron();
-  glutSolidCube(2.0);
+  	  glutSolidCube(2.0);
   glEndList();
 
   glNewList(INSTRUMENT2, GL_COMPILE);
   //glutSolidIcosahedron();
-  glutSolidCube(2.0);
+  	  glutSolidCube(2.0);
   glEndList();
+
+  glNewList(NODEBALL, GL_COMPILE);
+  //glutSolidIcosahedron();
+	  glColor3f(0.5,0.5,0.5);
+	  glutSolidSphere(3.0, 100, 100);
+  glEndList();
+
+  glNewList(LIGHTARROW, GL_COMPILE);
+  	  drawCone();
+  glEndList();
+
+  glNewList(CLIP, GL_COMPILE);
+  	  glutSolidCube(2.0);
+  glEndList();
+
 //
 //
 //  //glutSolidIcosahedron();
@@ -588,6 +659,7 @@ void GL_Setup(int a, int b)
 
 }
 
+/*
 void myReshape(int w, int h)
 {
   W = w;
@@ -598,6 +670,7 @@ void myReshape(int w, int h)
   //myortho();
   glMatrixMode(GL_MODELVIEW);
 }
+*/
 
 void control_mode(int value)
 {
@@ -648,16 +721,117 @@ void polygon_mode(int value)
 void highlightBegin(void)
 {
   static GLfloat red[4] =
-  {1.0, 0.0, 0.0, 1.0};
+  {1.0, 1.0, 0.0, 1.0};
 
   glPushAttrib(GL_LIGHTING_BIT | GL_CURRENT_BIT);
   glMaterialfv(GL_FRONT, GL_DIFFUSE, red);
-  glColor3f(1.0, 0.0, 0.0);
+  glColor3f(1.0, 1.0, 0.0);
 }
 
 void highlightEnd(void)
 {
 	glPopAttrib();
+}
+
+//////////////////////
+// load the cognitive vascular model
+/////////////////////
+graph<vertex, edge> vascular;//= new graph<vertex, edge>();
+stack<string> path;
+ostringstream start, end;
+
+void loadCVModel() {
+
+	//vessels->add();
+
+
+	char ch = '0';
+	// add nodes
+	cout << " adding vertices ..." << endl;
+
+	for (int i = 0; i < 13; i++)
+	{
+		vertex aNode;
+
+		ostringstream convert;   // stream used for the conversion
+
+		convert << i;      // insert the textual representation of 'Number' in the characters in the stream
+
+		aNode.label = convert.str(); // set 'Result' to the contents of the stream
+
+		aNode.x = nodes[i][0];
+		aNode.y = nodes[i][1];
+		aNode.z = nodes[i][2];
+
+		vascular.addVertex(aNode);
+	}
+	// add links
+	cout << " adding links ..." << endl;
+	for (int i = 0; i < 12; i++)
+	{
+//		cout << i << endl;
+		// add links
+		edge aLink;
+		ostringstream convert1, convert2;   // stream used for the conversion
+
+//		cout << edges[i][0];
+		convert1 << edges[i][0];      // insert the textual representation of 'Number' in the characters in the stream
+		aLink.start_node = vascular.getVertexByLabel(convert1.str());
+		convert1.flush();
+		aLink.start_node->links.push_back(aLink); // insert this edge to which the vertex is connected
+//		cout << edges[i][1];
+		convert2 << edges[i][1]; //
+		aLink.end_node = vascular.getVertexByLabel(convert2.str());
+		aLink.end_node->links.push_back(aLink); //insert this edge to which the vertex is connected
+		aLink.start_node->neighbors.push_back(*(aLink.end_node));
+		aLink.end_node->neighbors.push_back(*(aLink.start_node));
+
+
+
+		vascular.addEdge(aLink);
+	}
+
+
+
+//
+//		{0,1}, {1,2}, {2,3}, // aorta: shortest (v0, v3),
+//		{1,4},{4,7},//CT: shortest path(v1, v4),
+//		{4,5}, {5,6},//LGA:shortpath(v4, v6)
+//		{7,8},//CHA: shortest path(v4, v7)
+//		{8,9},// LHA: shortest path(v7, v8)
+//		{7,10},{10,11}, // SpA: shortest path(v4, v10)
+//		{2, 12}// SMA: shortest path(v2v11)	//
+
+
+	cout << "Input the start vessel node: ";
+//	cin >> sLabel;
+	cout << "Input the end vessel node:";
+//	cin >> eLabel;
+
+	start << sLabel; end << eLabel;
+
+
+//	vascular.shortestPath(sLabel);
+	path = vascular.path(start.str(), end.str());
+	cout << "path size: " << path.size() << "\n";
+
+	cout << "Distance from " << sLabel << " to " << eLabel << " is " << path.size() -1
+			<< " and the path is " ;
+
+	while(!path.empty())
+	{
+		cout << "[" << (path.top())<<"],";
+	    path.pop();
+	}
+
+	cout << "the end" << endl;
+//	while(ch != 'q')
+//	{
+//		cin >> ch;
+//	}
+
+
+	return;
 }
 
 void draw_cognitive(void)
@@ -672,7 +846,7 @@ void draw_cognitive(void)
 //	glClearColor(0,1,0,1);
 //	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glColor3f(0.5,0.0,0.0);
+//	glColor3f(0.5,0.0,0.0);
 
 	glPushMatrix();
 
@@ -686,32 +860,220 @@ void draw_cognitive(void)
 //	glColor3f(0.5,0.5,0.0);
 //	glTranslatef(0,0,-50);
 
-	glLineWidth(10.);
-	glColor3f(i*0.05, 0, 0);
-	glBegin(GL_LINES);
-	for (int i = 0; i < 12; i++)
+
+	glPushMatrix();
+		glLineWidth(1.);
+		glColor3f(i*0.05, 1, 1);
+		glBegin(GL_LINES);
+			for (int i = 0; i < 12; i++)
+			{
+				glVertex3f(nodes[edges[i][0]][0],nodes[edges[i][0]][1], nodes[edges[i][0]][2]);
+				glVertex3f(nodes[edges[i][1]][0],nodes[edges[i][1]][1], nodes[edges[i][1]][2]);
+			}
+		glEnd();
+	glPopMatrix();
+
+	glLineWidth(2.0);
+	float x, y, z;
+	// Nodes
+	for (int i = 0; i < 13; i++)
 	{
-//			glVertex3fv(&nodes[(edges[2*i+0])*2+0]);
-//			glVertex3fv(&nodes[(edges[2*i+1])*2+0]);
-			glVertex3f(nodes[edges[i][0]][0],nodes[edges[i][0]][1], nodes[edges[i][0]][2]);
-			glVertex3f(nodes[edges[i][1]][0],nodes[edges[i][1]][1], nodes[edges[i][1]][2]);
+		////////////////
+		// node ball
+		///////////////
+		glPushMatrix();
+		glLoadName(NODEBALL);
+		if (theObject == NODEBALL)
+			highlightBegin();
 
-//		glVertex3f(0,0,0);
-//		glVertex3f(500,0,0);
-//		glVertex3f(0,0,0);
-//		glVertex3f(0,500,0);
-//		glVertex3f(0,0,0);
-//		glVertex3f(0,0,500);
+		x = nodes[i][0], y = nodes[i][1], z = nodes[i][2];
+
+		glTranslatef(x, y, z);
+	//	//  if (!menu_inuse) {
+	//		if (axis == 0) {
+			  if (theObject == NODEBALL) {
+	//			theObject = 1;
+	//	//		glRotatef(90, 0, 1, 0);
+	//			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+	//	//		glutPostRedisplay();
+			  }
+	//		  axis = 2;
+	//		}
+	//	//  }
+	//	glRotatef(90, 1, 0, 0);
+		glScalef(2.0, 2.0, 2.0);
+	//	if(menu_inuse)
+	//	{
+	//		glPushMatrix();
+	//		glRotatef(sqrt(pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+	//		glPopMatrix();
+	//	}
+		glColor3f(i*0.05, 0.3, 0.3);
+		glCallList(NODEBALL);
+		glPopMatrix();
+
+		glPushMatrix();
+
+		/* vessel label */
+		string str_text;
+		char text[] = "v";
+		ostringstream index, text2;
+
+
+		index << i;
+		text2 << text;
+		str_text = text2.str() + index.str();
+
+		x = (nodes[i][0])+2., y = nodes[i][1], z = nodes[i][2];
+		// The color, red for me
+		glColor3f(1, 0, 0);
+		// Position of the text to be printer
+		glRasterPos3f(x, y, z);
+		for(int j = 0; str_text[j] != '\0'; j++)
+		{
+//			cout << "str_text:" << str_text[j] << end;
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str_text[j]);
+		}
+
+
+		if (theObject == NODEBALL)
+			highlightEnd();
+		glPopMatrix();
+
 	}
-	glEnd();
 
-	glLineWidth(1.0);
-/* vessels */
+
+	path = vascular.path(start.str(), end.str());
+
+	// path
+	glPushMatrix();
+		glLineWidth(10.);
+		glColor3f(1, 0, 0);
+		glBegin(GL_LINE_STRIP);
+		while(!path.empty())
+		{
+			char a;
+			a = (char)(*path.top().c_str());
+			int i = a - '0';
+	//		cout << "i : " << i << endl;
+			glVertex3f(nodes[i][0],nodes[i][1], nodes[i][2]);
+			path.pop();
+		}
+		glEnd();
+	glPopMatrix();
+	/* vessels */
 //	glPushMatrix();
 //	glClipPlane(GL_CLIP_PLANE0, eqn);
 //	glEnable(GL_CLIP_PLANE0);
 //	glRotatef(90, 1, 0, 0);
 //	drawCylinder();
+	glLineWidth(1.0);
+
+//	////////////////
+//	// Arrow
+//	///////////////
+//	glLoadName(LIGHTARROW);
+//	glPushMatrix();
+//	if (theObject == LIGHTARROW)
+//		highlightBegin();
+//	glTranslatef(0,0, 5);
+////	glRotatef(1, 1,1, 1.0);
+//	glScalef(10.0, 30.0, 1.0);
+//
+//	/* instrument2 label */
+//	char text9[] = "Light";
+//	x = -20, y = -15, z = 0;
+//	// The color, red for me
+//	glColor3f(1, 0, 0);
+//	// Position of the text to be printer
+//	glRasterPos3f(x, y, z);
+//	for(int i = 0; text9[i] != '\0'; i++)
+//		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text9[i]);
+//
+//	glCallList(LIGHTARROW);
+//	if (theObject == LIGHTARROW)
+//		highlightEnd();
+//	glPopMatrix();
+//
+//	////////////////
+//	// Cyliner
+//	///////////////
+//	glLoadName(LIGHTSTICK);
+//	glPushMatrix();
+//	if (theObject == LIGHTSTICK)
+//		highlightBegin();
+//	glTranslatef(0,0, 5);
+////	glRotatef(1, 1,1, 1.0);
+//	glScalef(10.0, 30.0, 1.0);
+//
+//	glCallList(LIGHTSTICK);
+//	if (theObject == LIGHTSTICK)
+//		highlightEnd();
+//	glPopMatrix();
+
+		////////////////
+		// CLIP1
+		///////////////
+		glLoadName(CLIP);
+		glPushMatrix();
+		if (theObject == CLIP)
+			highlightBegin();
+		glTranslatef(10,-27, 30);
+	//	glRotatef(1, 1,1, 1.0);
+		glScalef(10.0, 30.0, 1.0);
+
+		glCallList(CLIP);
+		if (theObject == CLIP)
+			highlightEnd();
+		glPopMatrix();
+
+		////////////////
+		// CLIP2
+		///////////////
+		glLoadName(CLIP);
+		glPushMatrix();
+		if (theObject == CLIP)
+			highlightBegin();
+		glTranslatef(5,-22, 30);
+	//	glRotatef(1, 1,1, 1.0);
+		glScalef(10.0, 30.0, 1.0);
+
+		glCallList(CLIP);
+		if (theObject == CLIP)
+			highlightEnd();
+		glPopMatrix();
+
+//		////////////////
+//		// CLIP3
+//		///////////////
+//		glLoadName(CLIP);
+//		glPushMatrix();
+//		if (theObject == CLIP)
+//			highlightBegin();
+//		glTranslatef(0,0, 5);
+//	//	glRotatef(1, 1,1, 1.0);
+//		glScalef(10.0, 30.0, 1.0);
+//
+//		glCallList(CLIP);
+//		if (theObject == CLIP)
+//			highlightEnd();
+//		glPopMatrix();
+//
+//		////////////////
+//		// CLIP4
+//		///////////////
+//		glLoadName(CLIP);
+//		glPushMatrix();
+//		if (theObject == CLIP)
+//			highlightBegin();
+//		glTranslatef(0,0, 5);
+//	//	glRotatef(1, 1,1, 1.0);
+//		glScalef(10.0, 30.0, 1.0);
+//
+//		glCallList(LIGHTSTICK);
+//		if (theObject == CLIP)
+//			highlightEnd();
+//		glPopMatrix();
 
 	glPopMatrix();
 
@@ -720,69 +1082,113 @@ void draw_cognitive(void)
 void draw_front(void)
 {
 
-	glClearColor(0,1,0,1);
+	glClearColor(0.5,0.5,0.5,1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
 	glPushMatrix();
-	gluLookAt(0.0+shift, -500.0, scaling+average_z, average_x, average_y, average_z, 0,0,1);
+	glLoadIdentity();
+	gluLookAt(0.0+shift, -350.0, 20+scaling+average_z, average_x, average_y, average_z, 0,0,1);
+
+
+	/////////////////////
+	// STOMACH
+	////////////////////
+	glLoadName(STOMACH);
+	glPushMatrix();
+		if (theObject == STOMACH)
+			highlightBegin();
+		//  if (!menu_inuse) {
+	//		if (mouse_state == GLUT_LEFT) {
+			  if (theObject == STOMACH) {
+	//			theObject = 2;
+	//			glRotatef(90, 0, 1, 0);
+				glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+		//		glutPostRedisplay();
+			  }
+	//		}
+		//  }
+
+		glTranslatef(50,-20, -50);
+		glRotatef(0, 0, 0, 1.0);
+		glScalef(10.0, 10.0, 10.0);
+		glColor3f(0.6,0.8,0.8);             // Set color to yellow
+//		glutSolidSphere(3,100,100);	     // Draw Sphere
+	//	glCallList(STOMACH);
+		/* stomach label */
+		char text6[] = "stomach";
+		float x, y, z;
+		 x = -10, y = 5, z = 0;
+		// The color, red for me
+		glColor3f(1, 0, 0);
+		// Position of the text to be printer
+		glRasterPos3f(x, y, z);
+		for(int i = 0; text6[i] != '\0'; i++)
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text6[i]);
+
+
+		if (theObject == STOMACH)
+			highlightEnd();
+	glPopMatrix();
 
 	////////////////
 	// Artery
 	///////////////
 	glLoadName(ARTERY);
 	glPushMatrix();
-	if (theObject == ARTERY)
-		highlightBegin();
+		if (theObject == ARTERY)
+			highlightBegin();
 
-//	glTranslatef(0,15,0);
-//	//  if (!menu_inuse) {
-//		if (axis == 0) {
-		  if (theObject == ARTERY) {
-//			theObject = 1;
-//	//		glRotatef(90, 0, 1, 0);
-//			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
-//	//		glutPostRedisplay();
-		  }
-//		  axis = 2;
-//		}
-//	//  }
-//	glRotatef(90, 1, 0, 0);
-
-
-//	if(menu_inuse)
-//	{
-//		glPushMatrix();
-//		glRotatef(sqrt(pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
-//		glPopMatrix();
-//	}
-	glCallList(ARTERY);
-	/* vessel label */
-	char text[] = "Artery";
-	float x = 0, y = 20, z = 0;
-	// The color, red for me
-	glColor3f(1, 0, 0);
-	// Position of the text to be printer
-	glRasterPos3f(x, y, z);
-	for(int i = 0; text[i] != '\0'; i++)
-		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text[i]);
+	//	glTranslatef(0,15,0);
+	//	//  if (!menu_inuse) {
+	//		if (axis == 0) {
+			  if (theObject == ARTERY) {
+	//			theObject = 1;
+	//	//		glRotatef(90, 0, 1, 0);
+	//			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+	//	//		glutPostRedisplay();
+			  }
+	//		  axis = 2;
+	//		}
+	//	//  }
+	//	glRotatef(90, 1, 0, 0);
 
 
-	/* vessel label from srsml */
-	string str_text;
-	str_text = str_elements + str_elements2;
-	x = 0, y = 22, z = 0;
-	// The color, red for me
-	glColor3f(0, 1, 0);
-	// Position of the text to be printer
-	glRasterPos3f(x, y, z);
+	//	if(menu_inuse)
+	//	{
+	//		glPushMatrix();
+	//		glRotatef(sqrt(pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+	//		glPopMatrix();
+	//	}
+		glCallList(ARTERY);
+	glPopMatrix();
+	glPushMatrix();
+		/* vessel label */
+		char text[] = "Artery";
+		x = 0, y = 20, z = 0;
+		// The color, red for me
+		glColor3f(1, 0, 0);
+		// Position of the text to be printer
+		glRasterPos3f(x, y, z);
+		for(int i = 0; text[i] != '\0'; i++)
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text[i]);
 
-	for(int i = 0; str_text[i] != '\0'; i++)
-		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str_text[i]);
+
+		/* vessel label from srsml */
+		string str_text;
+		str_text = str_elements + str_elements2;
+		x = 0, y = 22, z = 0;
+		// The color, red for me
+		glColor3f(0, 1, 0);
+		// Position of the text to be printer
+		glRasterPos3f(x, y, z);
+
+		for(int i = 0; str_text[i] != '\0'; i++)
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str_text[i]);
 
 
-	if (theObject == ARTERY)
-		highlightEnd();
+		if (theObject == ARTERY)
+			highlightEnd();
 	glPopMatrix();
 
 
@@ -791,67 +1197,67 @@ void draw_front(void)
 	/////////////
 	glLoadName(GALLBLADDER);
 	glPushMatrix();
-	if (theObject == GALLBLADDER)
-		highlightBegin();
-	//glTranslatef(0,40,20);
-	//  if (!menu_inuse) {
-//		if (mouse_state == GLUT_LEFT) {
-		  if (theObject == GALLBLADDER) {
-//			theObject = 2;
-//			glRotatef(90, 0, 1, 0);
-//			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
-	//		glutPostRedisplay();
-		  }
-//		}
-	//  }
-	//glRotatef(45, 0, 0, 1.0);
-	//glScalef(6.0, 3.0, 3.0);
-	/* stomach label */
-	char text2[] = "GALLBLADDER";
-	x = 5, y = -5, z = 0;
-	// The color, red for me
-	glColor3f(1, 0, 0);
-	// Position of the text to be printer
-	glRasterPos3f(x, y, z);
-	for(int i = 0; text2[i] != '\0'; i++)
-		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text2[i]);
+		if (theObject == GALLBLADDER)
+			highlightBegin();
+		//glTranslatef(0,40,20);
+		//  if (!menu_inuse) {
+	//		if (mouse_state == GLUT_LEFT) {
+			  if (theObject == GALLBLADDER) {
+	//			theObject = 2;
+	//			glRotatef(90, 0, 1, 0);
+	//			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+		//		glutPostRedisplay();
+			  }
+	//		}
+		//  }
+		//glRotatef(45, 0, 0, 1.0);
+		//glScalef(6.0, 3.0, 3.0);
+		/* stomach label */
+		char text2[] = "GALLBLADDER";
+		 x = 5, y = -5, z = 0;
+		// The color, red for me
+		glColor3f(1, 0, 0);
+		// Position of the text to be printer
+		glRasterPos3f(x, y, z);
+		for(int i = 0; text2[i] != '\0'; i++)
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text2[i]);
 
-	glCallList(GALLBLADDER);
-	if (theObject == GALLBLADDER)
-		highlightEnd();
+		glCallList(GALLBLADDER);
+		if (theObject == GALLBLADDER)
+			highlightEnd();
 	glPopMatrix();
 
 	//////////////
 	// Liver
 	/////////////
 	glLoadName(LIVER);
-	glPushMatrix();
-	if (theObject == LIVER)
-		highlightBegin();
-	//glTranslatef(0,40,20);
-	//  if (!menu_inuse) {
-//		if (mouse_state == GLUT_LEFT) {
-		  if (theObject == LIVER) {
-//			theObject = 2;
-//			glRotatef(90, 0, 1, 0);
-			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
-	//		glutPostRedisplay();
-		  }
-//		}
-	//  }
-	/* liver label */
-	char text3[] = "liver";
-	x = 5, y = -5, z = 0;
-	// The color, red for me
-	glColor3f(1, 0, 0);
-	// Position of the text to be printer
-	glRasterPos3f(x, y, z);
-	for(int i = 0; text3[i] != '\0'; i++)
-		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text3[i]);
+		glPushMatrix();
+		if (theObject == LIVER)
+			highlightBegin();
+		//glTranslatef(0,40,20);
+		//  if (!menu_inuse) {
+	//		if (mouse_state == GLUT_LEFT) {
+			  if (theObject == LIVER) {
+	//			theObject = 2;
+	//			glRotatef(90, 0, 1, 0);
+				glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+		//		glutPostRedisplay();
+			  }
+	//		}
+		//  }
+		/* liver label */
+		char text3[] = "liver";
+		x = 5, y = -5, z = 0;
+		// The color, red for me
+		glColor3f(1, 0, 0);
+		// Position of the text to be printer
+		glRasterPos3f(x, y, z);
+		for(int i = 0; text3[i] != '\0'; i++)
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text3[i]);
 
-	glCallList(LIVER);
-	if (theObject == LIVER)
-		highlightEnd();
+		glCallList(LIVER);
+		if (theObject == LIVER)
+			highlightEnd();
 	glPopMatrix();
 
 	//////////////
@@ -859,37 +1265,32 @@ void draw_front(void)
 	/////////////
 	glLoadName(PANCREAS);
 	glPushMatrix();
-	if (theObject == PANCREAS)
-		highlightBegin();
-	//  if (!menu_inuse) {
-//		if (mouse_state == GLUT_LEFT) {
-		  if (theObject == PANCREAS) {
-//			theObject = 2;
-//			glRotatef(90, 0, 1, 0);
-//			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
-	//		glutPostRedisplay();
-		  }
-//		}
-	//  }
-	/* pancreas label */
-	char text4[] = "pancreas";
-	x = 5, y = -5, z = 0;
-	// The color, red for me
-	glColor3f(1, 0, 0);
-	// Position of the text to be printer
-	glRasterPos3f(x, y, z);
-	for(int i = 0; text4[i] != '\0'; i++)
-		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text4[i]);
+		if (theObject == PANCREAS)
+			highlightBegin();
+		//  if (!menu_inuse) {
+	//		if (mouse_state == GLUT_LEFT) {
+			  if (theObject == PANCREAS) {
+	//			theObject = 2;
+	//			glRotatef(90, 0, 1, 0);
+	//			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+		//		glutPostRedisplay();
+			  }
+	//		}
+		//  }
+		/* pancreas label */
+		char text4[] = "pancreas";
+		x = 5, y = -5, z = 0;
+		// The color, red for me
+		glColor3f(1, 0, 0);
+		// Position of the text to be printer
+		glRasterPos3f(x, y, z);
+		for(int i = 0; text4[i] != '\0'; i++)
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text4[i]);
 
-	glCallList(PANCREAS);
-	if (theObject == PANCREAS)
-		highlightEnd();
+		glCallList(PANCREAS);
+		if (theObject == PANCREAS)
+			highlightEnd();
 	glPopMatrix();
-
-
-
-
-
 
 	//////////////
 	// Portal vein
@@ -909,56 +1310,56 @@ void draw_front(void)
 //		}
 	//  }
 	/* stomach label */
-	char text5[] = "stomach: ellipsoid";
+	char text5[] = "potal vein";
 	x = 5, y = -5, z = 0;
 	// The color, red for me
 	glColor3f(1, 0, 0);
 	// Position of the text to be printer
 	glRasterPos3f(x, y, z);
-	for(int i = 0; text4[i] != '\0'; i++)
-		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text4[i]);
+	for(int i = 0; text5[i] != '\0'; i++)
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text5[i]);
 
 	glCallList(PORTALVEIN);
 	if (theObject == PORTALVEIN)
 		highlightEnd();
 	glPopMatrix();
 
-	/////////////////////
-	// STOMACH
-	////////////////////
-	glLoadName(STOMACH);
-	glPushMatrix();
-	if (theObject == STOMACH)
-		highlightBegin();
-	//  if (!menu_inuse) {
-//		if (mouse_state == GLUT_LEFT) {
-		  if (theObject == STOMACH) {
-//			theObject = 2;
-//			glRotatef(90, 0, 1, 0);
-			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
-	//		glutPostRedisplay();
-		  }
-//		}
-	//  }
-/*
-	glTranslatef(-10,0, 0);
-	glRotatef(0, 0, 0, 1.0);
-	glScalef(2.0, 1.0, 1.0);
-*/
-	/* liver label */
-	char text6[] = "stomach";
-	x = -10, y = 5, z = 0;
-	// The color, red for me
-	glColor3f(1, 0, 0);
-	// Position of the text to be printer
-	glRasterPos3f(x, y, z);
-	for(int i = 0; text6[i] != '\0'; i++)
-		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text6[i]);
-
-	glCallList(STOMACH);
-	if (theObject == STOMACH)
-		highlightEnd();
-	glPopMatrix();
+//	/////////////////////
+//	// LIGHTSTICK
+//	////////////////////
+//	glLoadName(LIGHTSTICK);
+//	glPushMatrix();
+//	if (theObject == LIGHTSTICK)
+//		highlightBegin();
+//	//  if (!menu_inuse) {
+////		if (mouse_state == GLUT_LEFT) {
+//		  if (theObject == LIGHTSTICK) {
+////			theObject = 2;
+////			glRotatef(90, 0, 1, 0);
+//			glRotatef((pow(rotate_speed,2)+pow(scaling,2)), rotate_speed, scaling, 0);
+//	//		glutPostRedisplay();
+//		  }
+////		}
+//	//  }
+//
+//	glTranslatef(50,-20, -100);
+//	glRotatef(0, 0, 0, 1.0);
+//	glScalef(10.0, 10.0, 10.0);
+//	glCallList(LIGHTSTICK);
+//
+//	/* stomach label */
+//	char text10[] = "stick";
+//	x = 70, y = -20, z = -100;
+//	// The color, red for me
+//	glColor3f(1, 0, 0);
+//	// Position of the text to be printer
+//	glRasterPos3f(x, y, z);
+//	for(int i = 0; text10[i] != '\0'; i++)
+//		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text10[i]);
+//
+//	if (theObject == LIGHTSTICK)
+//		highlightEnd();
+//	glPopMatrix();
 
 	////////////////
 	// Instrument 1
@@ -967,9 +1368,11 @@ void draw_front(void)
 	glPushMatrix();
 	if (theObject == INSTRUMENT1)
 		highlightBegin();
-	glTranslatef(-10, -10, 10);
+
+	glTranslatef(70, -30, -30);
 	glRotatef(45, 1, 1, 1.0);
-	glScalef(3.0, 1.0, 1.0);
+
+	glScalef(30.0, 5.0, 5.0);
 	/* instrument1 label */
 	char text7[] = "instrument1-stick";
 	x = 10, y = 10, z = 0;
@@ -994,9 +1397,9 @@ void draw_front(void)
 	glPushMatrix();
 	if (theObject == INSTRUMENT2)
 		highlightBegin();
-	glTranslatef(10,10, 5);
+	glTranslatef(-70,-40, -20);
 	glRotatef(30, 1,1, 1.0);
-	glScalef(2.0, 1.0, 1.0);
+	glScalef(30.0, 5.0, 5.0);
 
 	/* instrument2 label */
 	char text8[] = "instrument2 - stick";
@@ -1013,7 +1416,64 @@ void draw_front(void)
 		highlightEnd();
 	glPopMatrix();
 
+	////////////////
+	// CLIP1
+	///////////////
+	glLoadName(CLIP);
+		glPushMatrix();
+		if (theObject == CLIP)
+			highlightBegin();
+		glTranslatef(10,-55,-80);
+	//	glRotatef(1, 1,1, 1.0);
+		glScalef(3.0, 30.0, 1.0);
+
+		glCallList(CLIP);
+		if (theObject == CLIP)
+			highlightEnd();
 	glPopMatrix();
+
+	glLoadName(CLIP);
+		glPushMatrix();
+		if (theObject == CLIP)
+			highlightBegin();
+		glTranslatef(15,-50,-80);
+	//	glRotatef(1, 1,1, 1.0);
+		glScalef(5.0, 30.0, 1.0);
+
+		glCallList(CLIP);
+		if (theObject == CLIP)
+			highlightEnd();
+	glPopMatrix();
+//	////////////////
+//	// Arrow
+//	///////////////
+//	glLoadName(LIGHTARROW);
+//	glPushMatrix();
+//	if (theObject == LIGHTARROW)
+//		highlightBegin();
+//	glTranslatef(0,0, 5);
+////	glRotatef(1, 1,1, 1.0);
+//	glScalef(10.0, 30.0, 1.0);
+//
+//	/* light label */
+//	char text9[] = "Light";
+//	x = -20, y = -15, z = 0;
+//	// The color, red for me
+//	glColor3f(1, 0, 0);
+//	// Position of the text to be printer
+//	glRasterPos3f(x, y, z);
+//	for(int i = 0; text9[i] != '\0'; i++)
+//		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text9[i]);
+//
+//	glCallList(LIGHTARROW);
+//	if (theObject == LIGHTARROW)
+//		highlightEnd();
+//	glPopMatrix();
+
+
+	glPopMatrix();
+
+
 
 }
 
@@ -1091,9 +1551,11 @@ void display(void)
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //  glPopMatrix();
+
   /* left view */
   glViewport(0,0, W/2, H);
 
+  glColor3f(0.0,0.0,0.5);
   draw_front();
 
 
@@ -1217,12 +1679,39 @@ void locate_pers(int value)
       glMatrixMode(GL_PROJECTION);
       glPushMatrix();
       glLoadIdentity();
-      viewport[0] = 0;
+      viewport[0] = W/2;
       viewport[1] = 0;
-      viewport[2] = W;
+      viewport[2] = W/2;
       viewport[3] = H;
       gluPickMatrix(x, H - y, 5.0, 5.0, viewport);
-      mypers(); // this is different from locate
+      mypers(); // this is different from the function locate above
+
+      glMatrixMode(GL_MODELVIEW);
+      draw_cognitive();
+      glMatrixMode(GL_PROJECTION);
+      glPopMatrix();
+      glMatrixMode(GL_MODELVIEW);
+//      hits = glRenderMode(GL_RENDER);
+    } else {
+      hits = 0;
+    }
+    processHits(hits, selectBuf);
+  }
+  if (locating) {
+    if (mouse_state == GLUT_ENTERED) {
+//      (void) glRenderMode(GL_SELECT);
+      glInitNames();
+      glPushName(-1);
+
+      glMatrixMode(GL_PROJECTION);
+      glPushMatrix();
+      glLoadIdentity();
+      viewport[0] = 0;
+      viewport[1] = 0;
+      viewport[2] = W/2;
+      viewport[3] = H;
+      gluPickMatrix(x, H - y, 5.0, 5.0, viewport);
+      mypers(); // this is different from the function locate above
 
       glMatrixMode(GL_MODELVIEW);
       draw_front();
@@ -1235,6 +1724,7 @@ void locate_pers(int value)
     }
     processHits(hits, selectBuf);
   }
+
   locating = 0;
 }
 
@@ -1374,6 +1864,7 @@ void loadSRSML()
 			}
 		}
 	}
+	loadCVModel();
 }
 
 void loadXML()
@@ -1728,6 +2219,8 @@ void createMenu()
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 
 }
+
+
 int main(int argc, char ** argv)
 {
 
