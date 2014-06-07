@@ -148,7 +148,9 @@ string label_vessels[] ={"aorta" ,
 
 int sLabel=0, eLabel=7;
 
+double rotate_by_key=0;
 
+double rotate_x=0.5;
 /*
 void drawStomach()
 {
@@ -303,6 +305,21 @@ void mouseCallBack(int btn, int state, int x, int y)
         if( btn == GLUT_MIDDLE_BUTTON ) axis = 1;
         if( btn == GLUT_RIGHT_BUTTON) axis = 2;
     }
+
+    // Wheel reports as button 3(scroll up) and button 4(scroll down)
+    if ((btn == 3) || (btn == 4)) // It's a wheel event
+    {
+        // Each wheel event reports like a button click, GLUT_DOWN then GLUT_UP
+        if (state == GLUT_UP) return; // Disregard redundant GLUT_UP events
+        	printf("Scroll %s At %d %d\n", (btn == 3) ? "Up" : "Down", x, y);
+        if (btn == 3)
+            rotate_x += .05;
+        if (btn == 4)
+            rotate_x -= .05;
+    }else{  // normal button event
+        printf("Button %s At %d %d\n", (state == GLUT_DOWN) ? "Down" : "Up", x, y);
+    }
+
 }
 
 
@@ -855,6 +872,7 @@ void draw_cognitive(void)
 	/* light */
 //	cout << average_x << average_y << average_z << endl;
 //	gluLookAt(0.0+shift, -500.0, 0.0+scaling, average_x, average_y, average_z, 0,1,0);
+    glRotatef(  rotate_x,-1.0f, 1.5f, -5.0f );
 	gluLookAt(-20.0-2*scaling,-500.0,0.0+2 * scaling, 0.0, 0.0, 0.0, 0,0,1);
 
 //	glColor3f(0.5,0.5,0.0);
@@ -1088,7 +1106,9 @@ void draw_front(void)
 
 	glPushMatrix();
 	glLoadIdentity();
-	gluLookAt(0.0+shift, -350.0, 20+scaling+average_z, average_x, average_y, average_z, 0,0,1);
+    glRotatef(  rotate_x,-1.0f, 1.5f, -5.0f );
+    glRotatef(  rotate_x,-1.0f, 1.5f, -5.0f );
+    gluLookAt(0.0+shift, -300.0, 20+scaling+average_z, average_x, average_y, average_z, 0,0,1);
 
 
 	/////////////////////
@@ -1801,12 +1821,16 @@ void keyboard(int key, int x, int y)
 	break;
 	case GLUT_KEY_DOWN:
 		scaling += 1.0f;
+		output(80, 150, "Down Arrow:");
 	break;
 	case GLUT_KEY_LEFT:
 		shift -= 1.0f;
+		output(80, 150, "Down Arrow:");
+
 	break;
 	case GLUT_KEY_RIGHT:
 		shift += 1.0f;
+		output(80, 150, "Down Arrow:");
 	break;
 	}
 	glutPostRedisplay();
